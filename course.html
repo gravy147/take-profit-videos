@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Profit Course</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player"></script>
+    
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: These are placeholders. You will replace them with your own.
+        // For now, the code will detect this and show dummy data.
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        const videoList = document.getElementById('video-list');
+        const videoPlayerContainer = document.getElementById('video-player-container');
+        let activeVideoIndex = -1;
+        let videoData = [];
+
+        // Check if Firebase config is valid (i.e., not a dummy config)
+        if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
+            // This part will run only after you add your own Firebase config
+            const firebaseApp = initializeApp(firebaseConfig);
+            const db = getFirestore(firebaseApp);
+            const auth = getAuth(firebaseApp);
+            const videosCol = collection(db, "videos"); // Using a simpler collection for now
+
+            signInAnonymously(auth).then(() => {
+                onSnapshot(videosCol, (snapshot) => {
+                    videoData = [];
+                    snapshot.forEach(doc => {
+                        videoData.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderVideoList();
+                });
+            }).catch(error => {
+                console.error("Firebase Auth Error:", error);
+                showPlaceholder();
+            });
+        } else {
+            // This part will run when you run the file locally
+            videoData = [
+                {
+                    title: "1. Candlesticks, S&P, Trenclines",
+                    duration: "53:38",
+                    thumbnail: "https://i.postimg.cc/cHQPXw9J/lesson-1.png",
+                    playbackId: "xQL00NsYG1q5wpOZpMX7qLgEoGS6qrMLJqw7CALV1Oxk"
+                },
+                {
+                    title: "2. Market Structure, Direction and Altseason",
+                    duration: "1:19:57",
+                    thumbnail: "https://i.postimg.cc/nhbBtm0x/lessson-2.png",
+                    playbackId: "lICaZLsOzyKsb9iGJYLAkJUkNsfPlmLZ8yEVjgT2eFE"
+                },
+                {
+                    title: "3. Leverage Trading Strategy",
+                    duration: "1:18:07",
+                    thumbnail: "https://i.postimg.cc/YS8Wgsk2/lesson-3.png",
+                    playbackId: "6oMFDQBNfJgkeelAFjDQ0200p7Cg3u1ZZ5YOi2hyeQf5g"
+                }
+                
+            ];
+            renderVideoList();
+        }
+
+        // Function to render the video list from the data
+        function renderVideoList() {
+            videoList.innerHTML = ''; // Clear existing list
+            if (videoData.length === 0) {
+                videoList.innerHTML = `<p class="text-white/50 text-sm text-center mt-4">No videos found.</p>`;
+                showPlaceholder();
+                return;
+            }
+            videoData.forEach((video, index) => {
+                const videoItem = document.createElement('div');
+                videoItem.className = `video-item flex items-start p-4 rounded-lg space-x-4 mb-4 ${index === activeVideoIndex ? 'active' : ''}`;
+                videoItem.dataset.id = video.id || index; // Use ID if available, otherwise index
+                
+                videoItem.innerHTML = `
+                    <div class="flex-shrink-0">
+                        <img src="${video.thumbnail}" alt="${video.title} thumbnail" class="w-24 h-16 object-cover rounded-md shadow-md">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium leading-tight">${video.title}</p>
+                        <div class="flex items-center text-xs text-white/50 mt-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 mr-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span>${video.duration}</span>
+                        </div>
+                    </div>
+                `;
+                videoList.appendChild(videoItem);
+
+                videoItem.addEventListener('click', () => {
+                    playVideo(index);
+                });
+            });
+
+            // If no video is playing, play the first one
+            if (activeVideoIndex === -1 && videoData.length > 0) {
+                playVideo(0);
+            }
+        }
+
+        // Function to load and play a video
+        function playVideo(index) {
+            activeVideoIndex = index;
+            const video = videoData[index];
+            
+            document.querySelectorAll('.video-item').forEach(item => {
+                item.classList.remove('active');
+                item.style.borderLeft = 'none';
+                item.style.paddingLeft = '2rem';
+            });
+            
+            document.querySelector(`.video-item[data-id="${video.id || index}"]`).classList.add('active');
+            document.querySelector(`.video-item[data-id="${video.id || index}"]`).style.borderLeft = '4px solid #93C5FD';
+            document.querySelector(`.video-item[data-id="${video.id || index}"]`).style.paddingLeft = '1.75rem';
+
+            videoPlayerContainer.innerHTML = `
+                <mux-player
+                    playback-id="${video.playbackId}"
+                    poster="${video.thumbnail}"
+                    stream-type="on-demand"
+                    controls
+                    accent-color="#93C5FD"
+                    class="rounded-xl shadow-lg w-full h-full"
+                ></mux-player>
+            `;
+        }
+
+        function showPlaceholder() {
+            videoPlayerContainer.innerHTML = `
+                <div class="text-center text-white/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-20 h-20 mx-auto mb-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.602 3.86a.375.375 0 0 1-.579-.333V9.813a.375.375 0 0 1 .579-.333l5.602 3.86Z" />
+                    </svg>
+                    <h2 class="text-2xl font-semibold">Select a Video</h2>
+                    <p class="mt-2 text-sm">Add videos to your database to start watching.</p>
+                </div>
+            `;
+        }
+
+        // Initial render
+        window.onload = () => {
+            renderVideoList();
+        };
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19; /* Main background color */
+        }
+        .sidebar {
+            background-color: #0d121c; /* Sidebar background color */
+        }
+        .video-item {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: #121723; /* Video item background color */
+        }
+        .video-item:hover {
+            background-color: #1a202e; /* Video item hover background color */
+        }
+        .video-item.active {
+            background-color: #93C5FD20; /* Active video item background with a slight transparency */
+            border-left: 4px solid #93C5FD; /* Active video item border color */
+            padding-left: 1.75rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-white">
+
+    <!-- Header Section -->
+    <header class="bg-black/20 backdrop-blur-md sticky top-0 z-50 py-4 px-6 flex justify-between items-center border-b border-white/10">
+        <!-- Left side: Logo/Title -->
+        <div class="flex items-center space-x-2">
+            <img src="logo.png" alt="Take Profit Logo" class="h-8 w-auto rounded-full">
+            <span class="font-bold text-xl">Take Profit</span>
+        </div>
+        
+        <!-- Right side: Home button -->
+        <div class="flex items-center space-x-4">
+            <a href="/" class="text-white/75 hover:text-white transition-colors duration-200 border border-white/20 rounded-lg px-4 py-2" title="Home">
+                Home
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex min-h-screen text-white">
+        <!-- Sidebar and Video Player Container -->
+        <div class="sidebar w-1/4 min-h-screen p-6 overflow-y-auto">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold">Past Discord VCs</h1>
+                <p class="text-white/50 mt-1">Master the art of trading</p>
+            </div>
+            <div id="video-list">
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center p-8 bg-[#0b0f19]">
+            <div id="video-player-container" class="w-full h-full flex items-center justify-center">
+            </div>
+        </div>
+    </main>
+</body>
+</html>
