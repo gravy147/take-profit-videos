@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Take Profit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        // Placeholder for a backend API endpoint that would handle authentication
+        // In a real application, you would replace this with a URL to your server
+        const LOGIN_API_URL = '/api/login';
+        
+        // Wait for the DOM to be fully loaded before attaching event listeners
+        window.addEventListener('load', () => {
+            const loginForm = document.getElementById('login-form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+            const messageClose = document.getElementById('message-close');
+            
+            // Show message box with a message
+            function showMessage(message, isError = true) {
+                messageText.textContent = message;
+                messageBox.style.display = 'block';
+                if (isError) {
+                    messageBox.classList.remove('bg-green-500');
+                    messageBox.classList.add('bg-red-500');
+                } else {
+                    messageBox.classList.remove('bg-red-500');
+                    messageBox.classList.add('bg-green-500');
+                }
+            }
+            
+            // Hide message box
+            if (messageClose) {
+                messageClose.addEventListener('click', () => {
+                    messageBox.style.display = 'none';
+                });
+            }
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
+
+                    if (!email || !password) {
+                        showMessage("Please enter both username and license key.");
+                        return;
+                    }
+                    
+                    // Simulate a client-server interaction for authentication
+                    try {
+                        // This is a placeholder for a real API call.
+                        // Your server would take these credentials, connect to your
+                        // Neon Console database, and verify the user.
+                        const response = await fetch(LOGIN_API_URL, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ email, password })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok && result.success) {
+                            showMessage("Login successful! Redirecting...", false);
+                            // Redirect to the protected page on successful login
+                            window.location.href = "index.html"; 
+                        } else {
+                            const errorMessage = result.message || "Login failed. Please check your credentials.";
+                            showMessage(errorMessage);
+                        }
+                    } catch (error) {
+                        console.error("Login failed:", error);
+                        showMessage("An error occurred during login. Please try again.");
+                    }
+                });
+            } else {
+                console.error("Login form element not found.");
+            }
+        });
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .login-card {
+            background-color: rgba(18, 23, 35, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        input {
+            background-color: #0d121c;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        button {
+            background-color: #93C5FD;
+            color: #0d121c;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-white p-4">
+    <div class="login-card w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-white/10">
+        <!-- Logo at the top -->
+        <div class="flex justify-center mb-6">
+            <img src="logo.png" alt="Logo" class="w-16 h-16 rounded-full shadow-lg">
+        </div>
+        
+        <h1 class="text-3xl font-bold text-center mb-2">Welcome to Take Profit</h1>
+        <p class="text-white/75 text-center mb-8">Enter your credentials to access the course.</p>
+        
+        <form id="login-form">
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-white/75 mb-1">Discord Username</label>
+                <input type="text" id="email" name="email" placeholder="Enter your username" class="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300" required>
+            </div>
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-white/75 mb-1">License Key</label>
+                <input type="password" id="password" name="password" placeholder="XXXX-XXXX-XXXX-XXXX" class="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300" required>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl shadow-lg hover:bg-blue-300 transition-colors border border-white/20">
+                Sign In
+            </button>
+        </form>
+        
+        <!-- Message Box -->
+        <div id="message-box" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 p-4 rounded-lg shadow-xl text-white text-center transition-all duration-300">
+            <p id="message-text" class="inline-block"></p>
+            <button id="message-close" class="ml-4 font-bold text-lg leading-none">&times;</button>
+        </div>
+    </div>
+</body>
+</html>
